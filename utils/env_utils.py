@@ -5,7 +5,7 @@ from environments.environment_abstract import Environment
 
 def get_environment(env_name: str) -> Environment:
     env_name = env_name.lower()
-    puzzle_n_regex = re.search("puzzle(\d+)", env_name)
+    puzzle_n_regex = re.search(r"puzzle(\d+)", env_name)
     env: Environment
 
     if env_name == 'cube3':
@@ -17,7 +17,7 @@ def get_environment(env_name: str) -> Environment:
         env = NPuzzle(puzzle_dim)
     elif 'lightsout' in env_name:
         from environments.lights_out import LightsOut
-        m = re.search('lightsout([\d]+)', env_name)
+        m = re.search(r'lightsout([\d]+)', env_name)
         env = LightsOut(int(m.group(1)))
     elif env_name == 'sokoban':
         from environments.sokoban import Sokoban
