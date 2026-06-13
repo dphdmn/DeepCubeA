@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import time
 import subprocess
 import threading
 import numpy as np
@@ -44,19 +45,45 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
         astar_cmd += f" >> \"{output_file}\""
 
     print_fn(f"Running solver (batch_size={batch_size})...")
+    start_time = time.time()
     proc = subprocess.Popen(astar_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, env=env)
 
+    def is_noise(line):
+        return (line.startswith("Times - remOpen:")
+                or line.startswith("Iteration:")
+                or line in ("INITIALIZING QUEUES", "GET START"))
+
     def stream(stream, label):
+        in_progress = False
         for raw in iter(stream.readline, ''):
             line = raw.rstrip()
-            print_fn(line)
-            if progress_callback:
-                m = re.match(r'\s*itr (\d+),', line)
-                if m:
-                    progress_callback(int(m.group(1)))
-                m = re.match(r'Iteration: (\d+),', line)
-                if m:
-                    progress_callback(int(m.group(1)))
+            itr = None
+            m = re.match(r'\s*itr (\d+),', line)
+            if m:
+                itr = int(m.group(1))
+            m = re.match(r'Iteration: (\d+),', line)
+            if m:
+                itr = int(m.group(1))
+
+            if itr is not None:
+                elapsed = time.time() - start_time
+                bar_width = 30
+                pos = (itr - 1) % (bar_width * 5)
+                filled = pos * bar_width // (bar_width * 5)
+                bar = '#' * filled + '>' + ' ' * (bar_width - filled - 1)
+                print_fn(f"\riter {itr:>5d} | [{bar}] | {elapsed:>6.1f}s", end='')
+                in_progress = True
+                if progress_callback:
+                    progress_callback(itr)
+            elif is_noise(line):
+                pass
+            else:
+                if in_progress:
+                    print_fn('')
+                    in_progress = False
+                print_fn(line)
+        if in_progress:
+            print_fn('')
         stream.close()
 
     t1 = threading.Thread(target=stream, args=(proc.stdout, "out"))

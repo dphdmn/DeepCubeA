@@ -456,6 +456,7 @@ def bwas_python(args, env: Environment, states: List[State]):
               "# Nodes Gen: %s, Time: %.2f" % (state_idx, path_cost, len(soln),
                                                format(num_nodes_gen_idx, ","),
                                                solve_time))
+        print("Solution:", "".join(["UDLR"[i] for i in soln]))
 
     return solns, paths, times, num_nodes_gen
 
