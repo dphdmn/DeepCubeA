@@ -25,6 +25,7 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print):
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = "0"
     env["PYTHONPATH"] = f"{here}{os.pathsep}{env.get('PYTHONPATH', '')}"
+    env["PYTHONUNBUFFERED"] = "1"
 
     astar_cmd = (
         f"python {os.path.join(here, 'search_methods', 'astar.py')}"
@@ -40,13 +41,14 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print):
     if output_file:
         astar_cmd += f" >> \"{output_file}\""
 
-    print_fn(f"Running: astar.py")
+    print_fn(f"Starting solver... (batch_size={batch_size})")
     proc = subprocess.Popen(astar_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
     for line in proc.stdout:
         print_fn(line.rstrip())
     proc.wait()
     if proc.returncode != 0:
         raise RuntimeError(f"solver failed with exit code {proc.returncode}")
+    print_fn("Solver finished.")
 
 
 def main():

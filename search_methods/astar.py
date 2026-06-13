@@ -405,8 +405,10 @@ def bwas_python(args, env: Environment, states: List[State]):
 
     print("device: %s, devices: %s, on_gpu: %s" % (device, devices, on_gpu))
 
+    print("Loading heuristic model...")
     heuristic_fn = nnet_utils.load_heuristic_fn(args.model_dir, device, on_gpu, env.get_nnet_model(),
                                                 env, clip_zero=True, batch_size=args.nnet_batch_size)
+    print("Model loaded.")
 
     solns: List[List[int]] = []
     paths: List[List[State]] = []
@@ -414,6 +416,7 @@ def bwas_python(args, env: Environment, states: List[State]):
     num_nodes_gen: List[int] = []
 
     for state_idx, state in enumerate(states):
+        print(f"\nState {state_idx + 1}/{len(states)}")
         start_time = time.time()
 
         num_itrs: int = 0
@@ -421,6 +424,9 @@ def bwas_python(args, env: Environment, states: List[State]):
         while not min(astar.has_found_goal()):
             astar.step(heuristic_fn, args.batch_size, verbose=args.verbose)
             num_itrs += 1
+            if num_itrs % 10 == 0:
+                open_size = sum(len(inst.open) for inst in astar.instances)
+                print(f"  itr {num_itrs}, open {open_size}")
 
         path: List[State]
         soln: List[int]
