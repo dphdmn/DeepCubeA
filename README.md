@@ -1,4 +1,9 @@
+# About this fork
+
+This fork is an attempt to fix numpy compatability issues.
+
 # DeepCubeA
+
 This is the code for [DeepCubeA](https://cse.sc.edu/~foresta/assets/files/SolvingTheRubiksCubeWithDeepReinforcementLearningAndSearch_Final.pdf) for python3 and PyTorch.
 The original python2, tensorflow code can be found on [CodeOcean](https://codeocean.com/capsule/5723040/tree/v1).
 
