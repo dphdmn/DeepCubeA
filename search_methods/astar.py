@@ -512,6 +512,7 @@ def bwas_cpp(args, env: Environment, states: List[State], results_file: str):
     num_nodes_gen: List[int] = []
 
     for state_idx, state in enumerate(states):
+        print(f"\nState {state_idx + 1}/{len(states)}")
         # Get string rep of state
         if args.env.upper() == "CUBE3":
             state_str: str = " ".join([str(x) for x in state.colors])
@@ -528,9 +529,8 @@ def bwas_cpp(args, env: Environment, states: List[State], results_file: str):
         for stdout_line in iter(popen.stdout.readline, ""):
             stdout_line = stdout_line.strip('\n')
             lines.append(stdout_line)
-            if args.verbose:
-                sys.stdout.write("%s\n" % stdout_line)
-                sys.stdout.flush()
+            sys.stdout.write("%s\n" % stdout_line)
+            sys.stdout.flush()
 
         moves = [int(x) for x in lines[-5].split(" ")[:-1]]
         soln = [x for x in moves][::-1]

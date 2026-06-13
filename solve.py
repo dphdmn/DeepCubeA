@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import threading
 import numpy as np
 import pickle
 import environments.n_puzzle
@@ -41,14 +42,23 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print):
     if output_file:
         astar_cmd += f" >> \"{output_file}\""
 
-    print_fn(f"Starting solver... (batch_size={batch_size})")
-    proc = subprocess.Popen(astar_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
-    for line in proc.stdout:
-        print_fn(line.rstrip())
+    print_fn(f"Running solver (batch_size={batch_size})...")
+    proc = subprocess.Popen(astar_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, env=env)
+
+    def stream(stream, label):
+        for line in iter(stream.readline, ''):
+            print_fn(line.rstrip())
+        stream.close()
+
+    t1 = threading.Thread(target=stream, args=(proc.stdout, "out"))
+    t2 = threading.Thread(target=stream, args=(proc.stderr, "err"))
+    t1.start(); t2.start()
+    t1.join(); t2.join()
     proc.wait()
+
     if proc.returncode != 0:
         raise RuntimeError(f"solver failed with exit code {proc.returncode}")
-    print_fn("Solver finished.")
+    print_fn("Done.")
 
 
 def main():
