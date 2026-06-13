@@ -21,33 +21,32 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print):
     env_name = f"puzzle{n}"
     results_dir = "results"
 
-    def run(cmd, label):
-        print_fn(f"[{label}] Running: {cmd}")
-        proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        if proc.stdout:
-            print_fn(proc.stdout)
-        if proc.stderr:
-            print_fn(proc.stderr)
-        if proc.returncode != 0:
-            raise RuntimeError(f"[{label}] failed with exit code {proc.returncode}")
-        return proc
+    here = os.path.dirname(os.path.abspath(__file__))
+    env = os.environ.copy()
+    env["CUDA_VISIBLE_DEVICES"] = "0"
+    env["PYTHONPATH"] = f"{here}{os.pathsep}{env.get('PYTHONPATH', '')}"
 
-    run("export CUDA_VISIBLE_DEVICES=0", "export")
-    run(". setup.sh", "setup")
     astar_cmd = (
-        f"python search_methods/astar.py"
-        f" --states data/scramble.pkl"
-        f" --model_dir saved_models/{env_name}/current"
+        f"python {os.path.join(here, 'search_methods', 'astar.py')}"
+        f" --states {os.path.join(here, 'data', 'scramble.pkl')}"
+        f" --model_dir {os.path.join(here, 'saved_models', env_name, 'current')}"
         f" --env {env_name}"
         f" --weight 0.8"
         f" --batch_size {batch_size}"
-        f" --results_dir {results_dir}"
+        f" --results_dir {os.path.join(here, results_dir)}"
         f" --language cpp"
         f" --nnet_batch_size 10000"
     )
     if output_file:
         astar_cmd += f" >> \"{output_file}\""
-    run(astar_cmd, "astar")
+
+    print_fn(f"Running: astar.py")
+    proc = subprocess.Popen(astar_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
+    for line in proc.stdout:
+        print_fn(line.rstrip())
+    proc.wait()
+    if proc.returncode != 0:
+        raise RuntimeError(f"solver failed with exit code {proc.returncode}")
 
 
 def main():
