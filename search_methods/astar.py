@@ -452,10 +452,7 @@ def bwas_python(args, env: Environment, states: List[State]):
         timing_str = ", ".join(["%s: %.2f" % (key, val) for key, val in astar.timings.items()])
         print("Times - %s, num_itrs: %i" % (timing_str, num_itrs))
 
-        print("State: %i, SolnCost: %.2f, # Moves: %i, "
-              "# Nodes Gen: %s, Time: %.2f" % (state_idx, path_cost, len(soln),
-                                               format(num_nodes_gen_idx, ","),
-                                               solve_time))
+        print("Moves: %i, Time: %.2f" % (len(soln), solve_time))
         print("Solution:", "".join(["UDLR"[i] for i in soln]))
 
     return solns, paths, times, num_nodes_gen
@@ -563,10 +560,7 @@ def bwas_cpp(args, env: Environment, states: List[State], results_file: str):
         assert search_utils.is_valid_soln(state, soln, env)
 
         # print to screen
-        print("State: %i, SolnCost: %.2f, # Moves: %i, "
-              "# Nodes Gen: %s, Time: %.2f" % (state_idx, path_cost, len(soln),
-                                               format(num_nodes_gen_idx, ","),
-                                               solve_time))
+        print("Moves: %i, Time: %.2f" % (len(soln), solve_time))
 
         print("State:", state_str)
         print("Solution:", "".join(["UDLR"[i] for i in soln]))

@@ -49,9 +49,17 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
     proc = subprocess.Popen(astar_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, env=env)
 
     def is_noise(line):
-        return (line.startswith("Times - remOpen:")
+        return (not line
+                or line.startswith("Times - remOpen:")
                 or line.startswith("Iteration:")
-                or line in ("INITIALIZING QUEUES", "GET START"))
+                or line.startswith("INITIALIZING")
+                or line.startswith("GET START")
+                or line.startswith("The argument supplied is")
+                or line == "State:"
+                or line.startswith("Move nums:")
+                or line.startswith("Nodes Generated:")
+                or line.startswith("Total time:")
+                or re.match(r'^[\d.\s]+$', line))
 
     def stream(stream, label):
         in_progress = False
@@ -67,11 +75,8 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
 
             if itr is not None:
                 elapsed = time.time() - start_time
-                bar_width = 30
-                pos = (itr - 1) % (bar_width * 5)
-                filled = pos * bar_width // (bar_width * 5)
-                bar = '#' * filled + '>' + ' ' * (bar_width - filled - 1)
-                print_fn(f"\riter {itr:>5d} | [{bar}] | {elapsed:>6.1f}s", end='')
+                sys.stdout.write(f"\riter {itr:>5d} | {elapsed:>6.1f}s")
+                sys.stdout.flush()
                 in_progress = True
                 if progress_callback:
                     progress_callback(itr)
@@ -79,11 +84,13 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
                 pass
             else:
                 if in_progress:
-                    print_fn('')
+                    sys.stdout.write('\n')
+                    sys.stdout.flush()
                     in_progress = False
                 print_fn(line)
         if in_progress:
-            print_fn('')
+            sys.stdout.write('\n')
+            sys.stdout.flush()
         stream.close()
 
     t1 = threading.Thread(target=stream, args=(proc.stdout, "out"))
