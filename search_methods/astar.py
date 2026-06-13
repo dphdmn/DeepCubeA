@@ -561,6 +561,9 @@ def bwas_cpp(args, env: Environment, states: List[State], results_file: str):
                                                format(num_nodes_gen_idx, ","),
                                                solve_time))
 
+        print("State:", state_str)
+        print("Solution:", "".join(["UDLR"[i] for i in soln]))
+
     os.unlink(socket_name)
 
     nnet_utils.stop_heuristic_fn_runners(heur_procs, heur_fn_i_q)
