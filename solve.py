@@ -59,6 +59,7 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
                 or line.startswith("Move nums:")
                 or line.startswith("Nodes Generated:")
                 or line.startswith("Total time:")
+                or line == "SOLVED!"
                 or re.match(r'^[\d.\s]+$', line))
 
     def stream(stream, label):
@@ -73,7 +74,7 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
             if m:
                 itr = int(m.group(1))
 
-            if itr is not None:
+            if itr is not None and (itr % 10 == 0 or itr == 1):
                 elapsed = time.time() - start_time
                 sys.stdout.write(f"\riter {itr:>5d} | {elapsed:>6.1f}s")
                 sys.stdout.flush()

@@ -449,9 +449,6 @@ def bwas_python(args, env: Environment, states: List[State]):
         assert search_utils.is_valid_soln(state, soln, env)
 
         # print to screen
-        timing_str = ", ".join(["%s: %.2f" % (key, val) for key, val in astar.timings.items()])
-        print("Times - %s, num_itrs: %i" % (timing_str, num_itrs))
-
         print("Moves: %i, Time: %.2f" % (len(soln), solve_time))
         print("Solution:", "".join(["UDLR"[i] for i in soln]))
 
@@ -561,8 +558,6 @@ def bwas_cpp(args, env: Environment, states: List[State], results_file: str):
 
         # print to screen
         print("Moves: %i, Time: %.2f" % (len(soln), solve_time))
-
-        print("State:", state_str)
         print("Solution:", "".join(["UDLR"[i] for i in soln]))
 
     os.unlink(socket_name)
