@@ -269,7 +269,7 @@ def heuristic_fn_runner(heuristic_fn_input_queue: Queue, heuristic_fn_output_que
             break
 
         if all_zeros:
-            heuristics = np.zeros(states_nnet[0].shape[0], dtype=np.float)
+            heuristics = np.zeros(states_nnet[0].shape[0], dtype=np.float32)
         else:
             heuristics = heuristic_fn(states_nnet, is_nnet_format=True)
 

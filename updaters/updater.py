@@ -129,7 +129,7 @@ class Updater:
 
         none_count: int = 0
         result_count: int = 0
-        display_counts: List[int] = list(np.linspace(1, self.num_batches, 10, dtype=np.int))
+        display_counts: List[int] = list(np.linspace(1, self.num_batches, 10, dtype=np.int64))
 
         start_time = time.time()
 
