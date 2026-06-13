@@ -1,6 +1,7 @@
 # About this fork
 
 This fork is an attempt to fix numpy compatability issues.
+Only sliding puzzles models supported.
 
 # DeepCubeA
 
