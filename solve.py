@@ -17,7 +17,7 @@ def make_scramble_file(scramble_str):
     return n
 
 
-def solve_single(scramble, batch_size, output_file=None, print_fn=print):
+def solve_single(scramble, batch_size, output_file=None, print_fn=print, language="python"):
     n = make_scramble_file(scramble)
     env_name = f"puzzle{n}"
     results_dir = "results"
@@ -36,7 +36,7 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print):
         f" --weight 0.8"
         f" --batch_size {batch_size}"
         f" --results_dir {os.path.join(here, results_dir)}"
-        f" --language cpp"
+        f" --language {language}"
         f" --nnet_batch_size 10000"
     )
     if output_file:
@@ -62,30 +62,28 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage:")
-        print("  python solve.py <scramble> [batch_size]")
-        print("  python solve.py --file <file.txt> [batch_size]")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("scramble_or_file", nargs="?", help="Scramble string or file path with --file")
+    parser.add_argument("batch_size", nargs="?", type=int, default=4000, help="Batch size (default: 4000)")
+    parser.add_argument("--file", action="store_true", help="Read scrambles from file")
+    parser.add_argument("--language", choices=["python", "cpp"], default="python", help="Solver backend")
+    args = parser.parse_args()
+
+    if args.scramble_or_file is None:
+        parser.print_help()
         sys.exit(1)
 
-    if sys.argv[1] == "--file":
-        if len(sys.argv) < 3:
-            print("Usage: python solve.py --file <file.txt> [batch_size]")
-            sys.exit(1)
-        filepath = sys.argv[2]
-        batch_size = int(sys.argv[3]) if len(sys.argv) > 3 else 10000
-
+    if args.file:
+        filepath = args.scramble_or_file
         with open(filepath) as f:
             scrambles = [line.strip() for line in f if line.strip()]
-
         output_file = f"{os.path.splitext(filepath)[0]}_solutions.txt"
         for scramble in scrambles:
             print(f"Solving: {scramble}")
-            solve_single(scramble, batch_size, output_file)
+            solve_single(scramble, args.batch_size, output_file, language=args.language)
     else:
-        scramble = sys.argv[1]
-        batch_size = int(sys.argv[2]) if len(sys.argv) > 2 else 10000
-        solve_single(scramble, batch_size)
+        solve_single(args.scramble_or_file, args.batch_size, language=args.language)
 
 
 if __name__ == "__main__":
