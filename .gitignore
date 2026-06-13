@@ -4,3 +4,5 @@ jobs/
 submit.sh
 dummy/
 debug
+data/*
+results/*
