@@ -1,0 +1,1 @@
+cd cpp && make all
