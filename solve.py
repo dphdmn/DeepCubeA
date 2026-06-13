@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import subprocess
 import threading
 import numpy as np
@@ -17,7 +18,7 @@ def make_scramble_file(scramble_str):
     return n
 
 
-def solve_single(scramble, batch_size, output_file=None, print_fn=print, language="python"):
+def solve_single(scramble, batch_size, output_file=None, print_fn=print, language="python", progress_callback=None):
     n = make_scramble_file(scramble)
     env_name = f"puzzle{n}"
     results_dir = "results"
@@ -46,8 +47,16 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
     proc = subprocess.Popen(astar_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, env=env)
 
     def stream(stream, label):
-        for line in iter(stream.readline, ''):
-            print_fn(line.rstrip())
+        for raw in iter(stream.readline, ''):
+            line = raw.rstrip()
+            print_fn(line)
+            if progress_callback:
+                m = re.match(r'\s*itr (\d+),', line)
+                if m:
+                    progress_callback(int(m.group(1)))
+                m = re.match(r'Iteration: (\d+),', line)
+                if m:
+                    progress_callback(int(m.group(1)))
         stream.close()
 
     t1 = threading.Thread(target=stream, args=(proc.stdout, "out"))

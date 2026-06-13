@@ -425,7 +425,7 @@ def bwas_python(args, env: Environment, states: List[State]):
             astar.step(heuristic_fn, args.batch_size, verbose=args.verbose)
             num_itrs += 1
             if num_itrs % 10 == 0:
-                open_size = sum(len(inst.open) for inst in astar.instances)
+                open_size = sum(len(inst.open_set) for inst in astar.instances)
                 print(f"  itr {num_itrs}, open {open_size}")
 
         path: List[State]
