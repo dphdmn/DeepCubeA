@@ -23,7 +23,7 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print):
 
     cmd = (
         f"export CUDA_VISIBLE_DEVICES=\"0\" && "
-        f"source setup.sh && "
+        f". setup.sh && "
         f"python search_methods/astar.py"
         f" --states data/scramble.pkl"
         f" --model_dir saved_models/{env_name}/current"
