@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 import numpy as np
 import pickle
 import environments.n_puzzle
@@ -15,7 +16,7 @@ def make_scramble_file(scramble_str):
     return n
 
 
-def solve_single(scramble, batch_size, output_file=None):
+def solve_single(scramble, batch_size, output_file=None, print_fn=print):
     n = make_scramble_file(scramble)
     env_name = f"puzzle{n}"
     results_dir = "results"
@@ -35,7 +36,13 @@ def solve_single(scramble, batch_size, output_file=None):
     )
     if output_file:
         cmd += f" >> \"{output_file}\""
-    os.system(cmd)
+
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    for line in proc.stdout:
+        print_fn(line.rstrip())
+    proc.wait()
+    if proc.returncode != 0:
+        raise RuntimeError(f"solver failed with exit code {proc.returncode}")
 
 
 def main():
