@@ -14,7 +14,7 @@ def parse_scramble(scramble_str):
     return environments.n_puzzle.NPuzzleState(np.array(arr))
 
 
-def _run_solver(states, batch_size, language, print_fn, progress_callback):
+def _run_solver(states, batch_size, language, print_fn, progress_callback, output_file=None):
     n = len(states[0].tiles) - 1
     env_name = f"puzzle{n}"
     results_dir = "results"
@@ -81,7 +81,11 @@ def _run_solver(states, batch_size, language, print_fn, progress_callback):
                 if progress_callback:
                     progress_callback(itr)
             elif line.startswith("Solution:"):
-                solutions.append(line[len("Solution:"):].strip())
+                sol = line[len("Solution:"):].strip()
+                solutions.append(sol)
+                if output_file:
+                    with open(output_file, 'a') as f:
+                        f.write(sol + '\n')
                 if in_progress:
                     sys.stdout.write('\n')
                     sys.stdout.flush()
@@ -114,13 +118,13 @@ def _run_solver(states, batch_size, language, print_fn, progress_callback):
 
 def solve_single(scramble, batch_size, output_file=None, print_fn=print, language="python", progress_callback=None):
     state = parse_scramble(scramble)
-    sols = _run_solver([state], batch_size, language, print_fn, progress_callback)
+    sols = _run_solver([state], batch_size, language, print_fn, progress_callback, output_file)
     return sols[0] if sols else None
 
 
-def solve_batch(scrambles, batch_size, language, print_fn=print, progress_callback=None):
+def solve_batch(scrambles, batch_size, language, output_file=None, print_fn=print, progress_callback=None):
     states = [parse_scramble(sc) for sc in scrambles]
-    return _run_solver(states, batch_size, language, print_fn, progress_callback)
+    return _run_solver(states, batch_size, language, print_fn, progress_callback, output_file)
 
 
 def main():
@@ -145,10 +149,8 @@ def main():
             return
         output_file = os.path.abspath(f"{os.path.splitext(filepath)[0]}_solutions.txt")
         print(f"Solving {len(scrambles)} puzzles... -> {output_file}")
-        solutions = solve_batch(scrambles, args.batch_size, args.language)
-        with open(output_file, 'w') as f:
-            for s in solutions:
-                f.write(s + '\n')
+        open(output_file, 'w').close()
+        solutions = solve_batch(scrambles, args.batch_size, args.language, output_file)
         print(f"\nSolutions ({output_file}):")
         with open(output_file) as f:
             print(f.read(), end='')
