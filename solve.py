@@ -9,22 +9,21 @@ import pickle
 import environments.n_puzzle
 
 
-def make_scramble_file(scramble_str):
+def parse_scramble(scramble_str):
     arr = [int(a) for x in scramble_str.split("/") for a in x.split()]
-    n = len(arr) - 1
-    state = environments.n_puzzle.NPuzzleState(np.array(arr))
-    data = {"states": [state]}
-    os.makedirs("data", exist_ok=True)
-    pickle.dump(data, open("data/scramble.pkl", "wb"))
-    return n
+    return environments.n_puzzle.NPuzzleState(np.array(arr))
 
 
-def solve_single(scramble, batch_size, output_file=None, print_fn=print, language="python", progress_callback=None):
-    n = make_scramble_file(scramble)
+def _run_solver(states, batch_size, language, print_fn, progress_callback):
+    n = len(states[0].tiles) - 1
     env_name = f"puzzle{n}"
     results_dir = "results"
 
     here = os.path.dirname(os.path.abspath(__file__))
+    data = {"states": states}
+    os.makedirs("data", exist_ok=True)
+    pickle.dump(data, open(os.path.join(here, "data", "scramble.pkl"), "wb"))
+
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = "0"
     env["PYTHONPATH"] = f"{here}{os.pathsep}{env.get('PYTHONPATH', '')}"
@@ -41,8 +40,6 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
         f" --language {language}"
         f" --nnet_batch_size 10000"
     )
-    if output_file:
-        astar_cmd += f" >> \"{output_file}\""
 
     print_fn(f"Running solver (batch_size={batch_size})...")
     start_time = time.time()
@@ -61,6 +58,8 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
                 or line.startswith("Total time:")
                 or line == "SOLVED!"
                 or re.match(r'^[\d.\s]+$', line))
+
+    solutions = []
 
     def stream(stream, label):
         in_progress = False
@@ -81,6 +80,13 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
                 in_progress = True
                 if progress_callback:
                     progress_callback(itr)
+            elif line.startswith("Solution:"):
+                solutions.append(line[len("Solution:"):].strip())
+                if in_progress:
+                    sys.stdout.write('\n')
+                    sys.stdout.flush()
+                    in_progress = False
+                print_fn(line)
             elif is_noise(line):
                 pass
             else:
@@ -103,6 +109,18 @@ def solve_single(scramble, batch_size, output_file=None, print_fn=print, languag
     if proc.returncode != 0:
         raise RuntimeError(f"solver failed with exit code {proc.returncode}")
     print_fn("Done.")
+    return solutions
+
+
+def solve_single(scramble, batch_size, output_file=None, print_fn=print, language="python", progress_callback=None):
+    state = parse_scramble(scramble)
+    sols = _run_solver([state], batch_size, language, print_fn, progress_callback)
+    return sols[0] if sols else None
+
+
+def solve_batch(scrambles, batch_size, language, print_fn=print, progress_callback=None):
+    states = [parse_scramble(sc) for sc in scrambles]
+    return _run_solver(states, batch_size, language, print_fn, progress_callback)
 
 
 def main():
@@ -122,10 +140,19 @@ def main():
         filepath = args.scramble_or_file
         with open(filepath) as f:
             scrambles = [line.strip() for line in f if line.strip()]
-        output_file = f"{os.path.splitext(filepath)[0]}_solutions.txt"
-        for scramble in scrambles:
-            print(f"Solving: {scramble}")
-            solve_single(scramble, args.batch_size, output_file, language=args.language)
+        if not scrambles:
+            print("No scrambles found.")
+            return
+        output_file = os.path.abspath(f"{os.path.splitext(filepath)[0]}_solutions.txt")
+        print(f"Solving {len(scrambles)} puzzles... -> {output_file}")
+        solutions = solve_batch(scrambles, args.batch_size, args.language)
+        with open(output_file, 'w') as f:
+            for s in solutions:
+                f.write(s + '\n')
+        print(f"\nSolutions ({output_file}):")
+        with open(output_file) as f:
+            print(f.read(), end='')
+
     else:
         solve_single(args.scramble_or_file, args.batch_size, language=args.language)
 
